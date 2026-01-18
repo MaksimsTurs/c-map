@@ -2,69 +2,137 @@
 
 C Map is a very simple Hash Table implemintation in C.
 
-## API
-`cmap_sinit`: Initialize a stack based Map that work with the buffer that **must** be allocated on the stack, when the Map does not have more place and `is_resizable` parameters is `0` the `cmap_set` function will return an error code and do nothing. By passing a `1` the Map will switch from stack based to heap based and use heap as a storage, returns a error code. 
+## [Table of Contents](#table-of-contents)
+  + [Documentation](#documentation)
+  + [Examples](#examples)
+    + [Init Map](#init-map)
+    + [Clear Map](#clear-map)
+    + [Set Item](#set-item)
+    + [Has Item](#has-item)
+    + [Get Item](#get-item)
+    + [Delete Item](#delete-item)
+    + [Error Handling](#error-handling)
 
-`cmap_dinit`: Initialize a heap based Map, when the Map does not have more place and to `is_resizable` parameters was passed a `0` the `cmap_set` function will return a error code and do nothing. By passing a `1` the map will expand, returns error code.
-
-`cmap_set`: Set a new value or overwrite the old value when the existing key was passed, returns error code.
-
-`cmap_get`: Save a map item data in the `cmap_item` structure, return error code when item with the passed key does not exist, returns error code.
-
-`cmap_delete`: Remove single item from the map, returns error code.
-
-`cmap_has`: Checks if element exist in the map.
-
-`cmap_print`: For debbuging purposes, print all elements in the map.
-
-## Example
+## [Documentation](#documentation)
+Checks if the element exist in the map.
 ```c
-#include "../include/c_map.h"
+t_bool cmap_has(const t_cmap* self, const t_char* key);
+```
+Initialize a stack based Map that work with the buffer that **must** be allocated on the stack, when the Map does not have more place and `is_resizable` parameters is `0` the `cmap_set` function will return an error code and do nothing. By passing a `1` the Map will switch from stack memory to heap memory and save all items on the heap. 
+```c
+t_cmap_exec_code cmap_sinit(t_cmap* self, t_cmap_item* buff, t_int64 size, t_int8 should_expand);
+```
+Initialize memory on the heap, when the Map does not have more place and `is_resizable` parameters was passed a `0` the `cmap_set` function will return a error code and do nothing. By passing a `1` the map will allocate more memory.
+```c
+t_cmap_exec_code cmap_dinit(t_cmap* self, t_int64 size, t_int8 should_expand);
+```
+Set a new value or overwrite the old when the existing key was passed.
+```c
+t_cmap_exec_code cmap_set(t_cmap* self, const t_char* key, t_any value);
+```
+Save a map item data in the `cmap_item` structure, return error code when item with the passed key does not exist.
+```c
+t_cmap_exec_code cmap_get(const t_cmap* self, t_cmap_item** item, const t_char* key);
+```
+Delete a item with specific key.
+```c
+t_cmap_exec_code cmap_delete(t_cmap* self, const t_char* key);
+```
+Delete all items in the map.
+```c
+t_cmap_exec_code cmap_clear(t_cmap* self);
+```
 
-int main(void)
-{
-  cmap _1 = {0};
-  cmap _2 = {0};
+## [Examples](#examples)
+Some examples how the library can be used.
+### [Init Map](#init-map)
+```c
+  // inlcude the header "c-map.h"
+  #define MAP_SIZE 10
 
-  cmap_item __1 = {0};
-  cmap_item __2 = {0};
-
-  cmap_item buff[4] = {0};
-
-  cmap_sinit(&_1, buff, sizeof(buff) / sizeof(cmap_item), 1);
-  cmap_dinit(&_2, sizeof(buff) / sizeof(cmap_item),  1);
-  
-  cmap_set(&_1, "First:Name", "Max");
-  cmap_set(&_2, "First:Name", "Max");
-  
-  cmap_set(&_1, "Second:Name", "Musterman");
-  cmap_set(&_2, "Second:Name", "Musterman");
-
-  if(cmap_has(&_1, "First:Name"))
+  int main(void)
   {
-    // do stuff...
+    t_cmap map = {0};
+    t_cmap_item buffer[MAP_SIZE] = {0};
+
+    // Init the memory on the heap (not resizable).
+    cmap_dinit(&map, MAP_SIZE, 0);
+    // Init the memory on the stack (not resizable).
+    cmap_dinit(&map, buffer, MAP_SIZE, 0);
   }
-  if(cmap_has(&_2, "Second:Name"))
+```
+### [Clear Map](#clear-map)
+```c
+  // ...includes and defines.
+  int main(void)
   {
-    // do stuff...
+    // ...init map and other stuff.
+    cmap_clear(&map);
+  }
+```
+### [Set Item](#set-item)
+```c
+  // ...includes and defines.
+  int main(void)
+  {
+    // ...init map and other stuff.
+    cmap_set(&map, "Key", "Value");
+  }
+```
+### [Has Item](#has-item)
+```c
+  // ...includes and defines.
+  int main(void)
+  {
+    // ...init map and other stuff.
+    if(cmap_has(&map, "Key"))
+    {
+      // ...do stuff
+    }
+  }
+```
+### [Get Item](#get-item)
+```c
+  // ...includes and defines.
+  int main(void)
+  {
+    // ...init map and other stuff.
+    t_cmap_item* item = NULL;
+
+    cmap_get(&map, &item, "Key");
+  }
+```
+### [Delete Item](#delete-item)
+```c
+  // ...includes and defines.
+  int main(void)
+  {
+    // ...init map and other stuff.
+    cmap_delete(&map, "Key");
+  }
+```
+### [Error Handling](#error-handling)
+```c
+  // ...includes and defines.
+  int main(void)
+  {
+    // ...init map and other stuff.
+    t_cmap_exec_code exec_code = 0;
+
+    if((exec_code = cmap_set(&map, "Key", "Value")) != CMAP_SUCCESS)
+    {
+      printf("%s", cmap_exec_code_to_string(exec_code));
+      // ...do stuff
+    }
   }
 
-  cmap_print(&_1);
-  cmap_print(&_2);
-
-  cmap_get(&_1, &__1, "First:Name");
-  cmap_get(&_2, &__2, "Second:Name");
-
-  printf("Item from __1 map: %lli %s %s\n", __1._m_hash, __1.m_key, (t_char*)__1.m_value);
-  printf("Item from __2 map: %lli %s %s\n", __2._m_hash, __2.m_key, (t_char*)__2.m_value);
-  printf("\n");
-
-  cmap_delete(&_1, "First:Name");
-  cmap_delete(&_2, "First:Name");
-
-  cmap_print(&_1);
-  cmap_print(&_2);
-
-  return 0;
-}
+  const char* cmap_exec_code_to_string(t_cmap_exec_code exec_code)
+  {
+    switch(exec_code)
+    {
+      case CMAP_ERR_ITEM_NOT_FOUND:
+        return "Item not found";
+      // ...other exec codes.
+    }
+  }
 ```
